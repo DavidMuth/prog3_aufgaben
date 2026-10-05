@@ -1,0 +1,24 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+BreakBeforeBraces: Attach
+AllowShortIfStatementsOnASingleLine: true
+IndentCaseLabels: false
+ColumnLimit: 140
+AllowShortBlocksOnASingleLine: false
+BinPackArguments: false
+AlignAfterOpenBracket: false
+# BreakAfterOpenBracketFunction: true
+# BreakBeforeCloseBracketFunction: true
+PenaltyBreakBeforeFirstCallParameter: 30
+PointerAlignment: Left
+ReferenceAlignment: Left
+Cpp11BracedListStyle: false # Block
+NamespaceIndentation: All
+AccessModifierOffset: -4
+BreakTemplateDeclarations: Yes
+SpaceAfterTemplateKeyword: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLoopsOnASingleLine: true
+BreakBeforeTemplateCloser: true
