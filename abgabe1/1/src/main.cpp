@@ -1,10 +1,11 @@
+#include <dm.hpp>
 #include <lk.hpp>
-
-void hello_david();
+#include <ms.hpp>
 
 int main(int argc, char* argv[]) {
     print_kaiser();
-    hello_david();
+    print_dm();
+    print_ms();
 
     return 0;
 }
