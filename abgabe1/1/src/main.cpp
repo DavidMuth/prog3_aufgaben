@@ -1,6 +1,10 @@
-#include <print>
+#include <lk.hpp>
+
 void hello_david();
-int main() {
-  std::println("Hi");
-  hello_david();
+
+int main(int argc, char* argv[]) {
+    print_kaiser();
+    hello_david();
+
+    return 0;
 }

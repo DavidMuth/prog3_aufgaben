@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 4.4)
-project(example)
 
-set (CMAKE_CXX_STANDARD 26)
-set (CMAKE_EXPORT_COMPILE_COMMANDS on)
+cmake_minimum_required(VERSION 3.16)
+project(prog3)
 
-file (GLOB_RECURSE SOURCES CONFIGURE_DEPENDS abgabe1/*.cpp)
+set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable (example_exe ${SOURCES})
+add_subdirectory(abgabe1)
 
