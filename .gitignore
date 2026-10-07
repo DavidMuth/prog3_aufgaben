@@ -2,3 +2,6 @@
 /.vscode
 /.cache
 **/.DS_Store
+/.vs
+/out
+/CMakeSettings.json
