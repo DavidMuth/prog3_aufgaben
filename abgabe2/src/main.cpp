@@ -1,13 +1,16 @@
 #include <cassert>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <iostream>
 #include <print>
 #include <string>
+#define NOMINMAX
+#include <windows.h>
 
-#define LEVEL 0
-// #define LEVEL 1
-// #define LEVEL 2
-// #define LEVEL 3
+//#define LEVEL 0
+//#define LEVEL 1
+//#define LEVEL 2
+#define LEVEL 3
 
 size_t map_byte2index(uint8_t color, size_t N);
 constexpr size_t N = 5;
@@ -15,7 +18,20 @@ const std::string COLORS[N] = { " ", "\u2591", "\u2592", "\u2593", "\u2588" };
 
 #if LEVEL > 0
 void display(size_t h, size_t w, const uint8_t* image) {
-    // TODO
+    for (size_t y = 0; y < h; y++) {
+        for (size_t x = 0; x < w; x++) {
+            // Pixel Wert holen
+            uint8_t pixel = image[y * w + x];
+
+            // Farbe zuordnen
+            size_t index = map_byte2index(pixel, N);
+
+            // Passendes Zeichen ausgeben - 2mal sonst sieht es komisch aus 
+            std::cout << COLORS[index] << COLORS[index];
+        }
+
+        std::cout << '\n';
+    }
 }
 #endif
 
@@ -43,17 +59,38 @@ void display(size_t h, size_t w, const uint8_t* image) {
  * @return a value between 0..N-1
  */
 size_t map_byte2index(uint8_t color, size_t N) {
-    return 0; // TODO
+    // Randfälle abfangen
+    if (N == 0) return 0;
+    if (N == 1) return 0;
+
+    // Für N = 2 gibt es nur zwei Regionen, die jeweils 128 Werte abdecken.
+    if (N == 2) {
+        return (color < 128) ? 0 : 1;
+    }
+    // Umrechnung auf ganze Zahlen:
+    size_t full_step = 256 / (N - 1);
+    size_t half_step = full_step / 2;
+
+    if (color < half_step) {
+        return 0;
+    }
+
+    // Ab dem ersten vollen Bereich + 1- Offset  
+    size_t adjusted_color = color - half_step;
+    size_t index = (adjusted_color / full_step) + 1;
+
+    // Sicherheitsbegrenzung, falls color == 255
+    return std::min(index, N - 1);
 }
 
 #if LEVEL > 1
 void set_pixel(size_t h, size_t w, uint8_t* image, size_t y, size_t x, uint8_t color) {
-    // TODO
+    image[y * w + x] = color;
 }
 #endif
 
 int main() {
-
+    SetConsoleOutputCP(CP_UTF8);
     std::println("Implement a display function (for LEVEL==1) to display images with 256 gray LEVELs.");
     std::println("Map the color 0..255 to the 5 gray LEVELs:");
     std::println("- 0..31    => '{0}{0}'", COLORS[0]);
@@ -187,7 +224,8 @@ int main() {
             for (size_t x = 0; x < w; x++) {
 
                 // Describe what is the difference between Option 1 and Option 2
-                //
+                // Bei Option 2: Erzeugt ein weißes Rechteck, weil Ganzzahldivision (x / w) immer 0 ergibt -> w immer größer x 
+                // Bei Option 1: wird mit dem 1.0 eine Kommazahldivision, deshalb funktioniert das
                 //
                 //
                 //
@@ -195,7 +233,7 @@ int main() {
                 // Option 1:
                 uint8_t color = (1.0 + cos(((1.0 * x) / w) * M_PI * 2.0) * cos(((1.0 * y) / h) * M_PI * 2.0)) / 2.0 * 255;
                 // Option 2:
-                // uint8_t color = (1.0+cos((x/w)*M_PI*2.0)*cos((y/h)*M_PI*2.0))/2.0*255;
+                //uint8_t color = (1.0 + cos(( x / w ) * M_PI * 2.0) *cos ((y/h) * M_PI * 2.0 )) / 2.0 * 255;
 
                 set_pixel(h, w, myimage, y, x, color);
             }
@@ -212,7 +250,11 @@ int main() {
         size_t w = 50;
         uint8_t* myimage = new uint8_t[w * h];
 
-        // TODO
+        for (size_t y = 0; y < h; y++) {
+            for (size_t x = 0; x < w; x++) {
+                myimage[y * w + x] = x * (255/ w); 
+            }
+        }
 
         std::println();
         display(h, w, myimage);
