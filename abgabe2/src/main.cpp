@@ -1,13 +1,16 @@
 #include <cassert>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <print>
 #include <string>
+#include <sys/types.h>
 
 // #define LEVEL 0
-#define LEVEL 1
+// #define LEVEL 1
 // #define LEVEL 2
-// #define LEVEL 3
+#define LEVEL 3
 
 size_t map_byte2index(uint8_t color, size_t N);
 constexpr size_t N = 5;
@@ -15,7 +18,15 @@ const std::string COLORS[N] = { " ", "\u2591", "\u2592", "\u2593", "\u2588" };
 
 #if LEVEL > 0
 void display(size_t h, size_t w, const uint8_t* image) {
-    // TODO
+    // pixel (y, x) is at image[y * w + x]
+    for (size_t y = 0; y < h; y++) {
+        for (size_t x = 0; x < w; x++) {
+            const uint8_t color = image[y * w + x];
+            const std::string& pixel = COLORS[map_byte2index(color, N)];
+            std::print("{}{}", pixel, pixel);
+        }
+        std::println();
+    }
 }
 #endif
 
@@ -46,18 +57,9 @@ size_t map_byte2index(uint8_t color, size_t N) {
     // The N indices are points spread over 0..256, with N-1 gaps between them.
     // For N = 5 thats 5 indices with 4, 64 wide gaps.
     // To normalize the gaps + indizes divide by gap size.
-    // -> index k now sits at k (0, 1, 2, 3, 4).
     // A color belongs to the nearest index.
     const size_t gaps = N - 1;
-
-    // To normalize the color, color / gap size = color / (256 / gaps) = color * gaps / 256.
-    // Only multiply here, divide by 256 later so nothing gets cut off.
-    // For color 100: 100 * 4 = 400 (= 400 / 256 = 1.56 gaps from 0).
     const size_t position = static_cast<size_t>(color) * gaps;
-
-    // Nearest index = round(position / 256).
-    // Integer division rounds down, + 128 (half of 256) makes it round to nearest.
-    // (400 + 128) / 256 = 528 / 256 = 2 -> color 100 maps to index 2.
     const size_t index = (position + 128) / 256;
 
     return index;
@@ -65,7 +67,8 @@ size_t map_byte2index(uint8_t color, size_t N) {
 
 #if LEVEL > 1
 void set_pixel(size_t h, size_t w, uint8_t* image, size_t y, size_t x, uint8_t color) {
-    // TODO
+    size_t idx = y * w + x;
+    image[idx] = color;
 }
 #endif
 
@@ -229,7 +232,12 @@ int main() {
         size_t w = 50;
         uint8_t* myimage = new uint8_t[w * h];
 
-        // TODO
+        for (size_t y = 0; y < h; y++) {
+            for (size_t x = 0; x < w; x++) {
+                size_t idx = x * N / w;
+                myimage[y * w + x] = idx * 255 / (N - 1);
+            }
+        }
 
         std::println();
         display(h, w, myimage);
