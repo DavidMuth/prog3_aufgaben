@@ -208,14 +208,20 @@ int main() {
 
                 // Describe what is the difference between Option 1 and Option 2
                 //
+                // Option one creates a mosaic style pattern.
+                // In Option 1, the multiplication with 1.0 turns x into a double, so x / w is a floating point division -> values between
+                // 0.0 and 1.0
                 //
-                //
+                // Option 2 creates a one-color surface.
+                // This is, because x, w, y and h are integers, so c++ does integer division and only the value before the decimal point
+                // survives. In the for loop, every x < w, so x / w = 0 and every y < h, so y / h = 0.
+                // So the calculation becomes: (1.0 + 1 * 1) / 2.0 * 255 = 255 -> every pixel gets the same color.
                 //
                 //
                 // Option 1:
                 uint8_t color = (1.0 + cos(((1.0 * x) / w) * M_PI * 2.0) * cos(((1.0 * y) / h) * M_PI * 2.0)) / 2.0 * 255;
                 // Option 2:
-                // uint8_t color = (1.0+cos((x/w)*M_PI*2.0)*cos((y/h)*M_PI*2.0))/2.0*255;
+                // uint8_t color = (1.0 + cos((x / w) * M_PI * 2.0) * cos((y / h) * M_PI * 2.0)) / 2.0 * 255;
 
                 set_pixel(h, w, myimage, y, x, color);
             }
@@ -234,8 +240,7 @@ int main() {
 
         for (size_t y = 0; y < h; y++) {
             for (size_t x = 0; x < w; x++) {
-                size_t idx = x * N / w;
-                myimage[y * w + x] = idx * 255 / (N - 1);
+                myimage[y * w + x] = (x * 255) / (w - 1);
             }
         }
 
