@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <thread>
+
 // a queue of ints
 class SpscQueue {
     std::vector<int> buf_;
@@ -54,13 +56,19 @@ class Sender {
 
     // Move
     Sender(Sender&& other) = default;
+    /*Sender(Sender&& other) : queue_(std::move(other.queue_)) {
+        std::cout << "Sender: move ctor\n";
+    }*/
 
     Sender& operator=(Sender&& other) = default;
 
     Sender() = default;
     Sender(std::shared_ptr<SpscQueue> queue) :queue_(queue) {}
 
-    void send(const int& v);
+    void send(const int& v) {
+            assert(queue_);
+            queue_->push_wait(v);
+    }
 };
 
 class Receiver {
@@ -78,7 +86,10 @@ public:
     Receiver(std::shared_ptr<SpscQueue> queue) : queue_(queue) {}
 
 
-    int recv();
+    int recv() {
+        assert(queue_);
+        return queue_->pop_wait();
+    };
 };
 
 struct Channel { // the return value of channel()
@@ -87,23 +98,63 @@ struct Channel { // the return value of channel()
 };
 
 Channel channel(std::size_t capacity) {
-    // TODO: create a shared SpscQueue and move it into
-    // a Sender and a Receiver (constructor params)
     std::shared_ptr<SpscQueue> queue = std::make_shared<SpscQueue>(capacity);
     return Channel{ .tx = Sender(queue), .rx = Receiver(queue) };
 };
 
+void producer_fun(Sender tx, int N) { // by value: the move happens here
+    for (int i = 1; i <= N; ++i) {
+        tx.send(i);
+    }
+}
+
+
+// TASK B:
+// Warum weder SpscQueue-Member noch unique_ptr?
+//  - Die Queue wird von 2 Objekten gebraucht (Sender und Receiver), und
+//    beide müssen sie am Leben halten.
+//  - Ein SpscQueue-Member gehörte nur einer Hälfte, die andere hätte keinen Zugriff.
+//  - unique_ptr erlaubt nur einen Besitzer. Die andere Hälfte wäre ein reiner
+//    Beobachter
+//
+// Warum shared_ptr?
+//  - Die Queue wird zerstört, wenn der letzte
+//    verschwindet, egal ob Sender oder Receiver zuerst endet.
+//
+// Warum ist das trotz atomic-Membern sicher?
+//  - Der Referenzzähler des shared_ptr ist unabhängig von der Queue -> schützt nur die Lebensdauer der Queue.
+//  - Die Elemente sind durch head und tail abgesichert: Der Producer ändert nur tail,
+//    der Consumer nur head. Der acquire/release sorgt dafür, dass der andere Thread
+//    die geschriebenen Daten sicher sieht.
+//
+// Warum bleibt SpscQueue einfach?
+//  - Nur der shared_ptr wird verschoben, die Queue selbst nie. Sie
+//    muss daher weder kopierbar noch verschiebbar sein
+
 
 int main() {
-    SpscQueue queue{ 2 };
-    assert(queue.try_push(10));
-    assert(queue.try_push(11));
-    assert(!queue.try_push(12));
+    Channel c = channel(2); // capacity 2 -> forces real waiting
 
-    int out;
-    assert(queue.try_pop(out));
-    std::cout << "out: " << out << "\n";
-    assert(queue.try_pop(out));
-    std::cout << "out: " << out << "\n";
-    assert(!queue.try_pop(out));
+    constexpr int n = 8;
+
+    std::thread producer([&] { producer_fun(std::move(c.tx), n); });
+
+    for (int i = 0; i < n; ++i) {
+        int x = c.rx.recv();
+        std::cout << "received = " << x << '\n';
+    }
+
+    //c.tx.send(1); // compiles but reports a runtime error (assert): tx was moved!
+    //receiver rx2 = c.rx; // does not compile (no copies!)
+
+    producer.join();
 }
+
+
+//void by_value(Sender tx) {}
+//void by_rref(Sender&& tx) {}
+//int main() {
+//    Channel c = channel(2);
+//    by_rref(std::move(c.tx));  // keine Ausgabe: kein neues Objekt wird erstellt
+//    by_value(std::move(c.tx)); // Ausgabe: Paramter neues eigenes Objekt -  Move-Konstruktor läuft
+//}
