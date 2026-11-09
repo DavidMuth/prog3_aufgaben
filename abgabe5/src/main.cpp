@@ -1,5 +1,6 @@
 #include <iostream>
 #include <assert.h>
+#include <optional>
 
 template<class T>
 class Vector {
@@ -103,8 +104,18 @@ void print(const T& v) {
 //    print(v2);
 //}
 
+template <class T>
+struct IsOptional {
+    static constexpr bool result = false;
+};
 
+template<class T>
+struct IsOptional<std::optional<T>> {
+    static constexpr bool result = true;
+};
 
+template<class T>
+constexpr bool IsOptionalV = IsOptional<T>::result;
 
 int main() {
     assert(!IsOptionalV<int>);
